@@ -15,7 +15,8 @@
 - **Zero dependencies** — pure Swift + Apple CoreML framework
 - **< 2ms inference** on Apple Neural Engine (ANE)
 - **Streaming API** — built-in sustained silence detection for real-time audio
-- **16kHz / 512-sample** chunks (32ms per frame)
+- **16kHz / 576-sample** chunks (36ms per frame)
+- **Explicit LSTM state** — full-fidelity Silero VAD v6.0.0 with temporal context
 
 ## Installation
 
@@ -40,7 +41,7 @@ import SileroVAD
 
 let vad = try SileroVAD()
 
-// Process 512 samples at 16kHz (32ms chunk)
+// Process 576 samples at 16kHz (36ms chunk)
 let audioChunk: [Float] = // ... your audio samples
 let probability = try vad.process(audioChunk)
 
@@ -60,7 +61,7 @@ import SileroVAD
 let vad = try SileroVAD()
 let stream = SileroVADStream(vad: vad)
 
-// In your audio callback, feed 512-sample chunks:
+// In your audio callback, feed 576-sample chunks:
 for chunk in audioChunks {
     let result = try stream.process(chunk, threshold: 0.3, requiredFrames: 16)
     
@@ -84,18 +85,18 @@ let vad = try SileroVAD()
 let format = AVAudioFormat(commonFormat: .pcmFormatFloat32,
                            sampleRate: 16000, channels: 1, interleaved: false)!
 
-inputNode.installTap(onBus: 0, bufferSize: 512, format: format) { buffer, _ in
+inputNode.installTap(onBus: 0, bufferSize: 576, format: format) { buffer, _ in
     guard let data = buffer.floatChannelData?[0] else { return }
     let samples = Array(UnsafeBufferPointer(start: data, count: Int(buffer.frameLength)))
     
-    // Process in 512-sample chunks
+    // Process in 576-sample chunks
     var offset = 0
-    while offset + 512 <= samples.count {
-        let chunk = Array(samples[offset..<offset+512])
+    while offset + 576 <= samples.count {
+        let chunk = Array(samples[offset..<offset+576])
         if let prob = try? vad.process(chunk), prob > 0.5 {
             print("Speech at offset \(offset)")
         }
-        offset += 512
+        offset += 576
     }
 }
 
@@ -108,9 +109,9 @@ try engine.start()
 
 | Method | Description |
 |--------|-------------|
-| `init()` | Load CoreML models from bundle |
-| `process([Float]) -> Float` | Process 512 samples, returns speech probability (0.0–1.0) |
-| `reset()` | Reset RNN hidden state for new audio stream |
+| `init()` | Load CoreML model from bundle |
+| `process([Float]) -> Float` | Process 576 samples, returns speech probability (0.0–1.0) |
+| `reset()` | Reset LSTM state for new audio stream |
 
 ### `SileroVADStream`
 
@@ -125,11 +126,11 @@ try engine.start()
 | Constant | Value | Description |
 |----------|-------|-------------|
 | `SileroVAD.sampleRate` | 16000 | Expected sample rate (Hz) |
-| `SileroVAD.chunkSize` | 512 | Samples per chunk (32ms) |
+| `SileroVAD.chunkSize` | 576 | Samples per chunk (36ms) |
 
 ## Model Details
 
-This package uses [Silero VAD v6](https://github.com/snakers4/silero-vad) converted to CoreML format. The model consists of three stages:
+This package uses [Silero VAD v6.0.0](https://github.com/snakers4/silero-vad) converted to CoreML format. The unified model integrates:
 
 1. **STFT** — Short-Time Fourier Transform preprocessing
 2. **Encoder** — Feature extraction
