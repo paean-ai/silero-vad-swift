@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Pæan™
+// Licensed under the MIT License. See LICENSE for details.
+
 import Foundation
 
 /// Streaming wrapper around `SileroVAD` that tracks consecutive silence frames.

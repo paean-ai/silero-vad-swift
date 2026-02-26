@@ -155,9 +155,9 @@ For security vulnerabilities, please see [SECURITY.md](SECURITY.md).
 
 ## License
 
-MIT © [Paean AI](https://paean.ai)
+MIT © [Pæan™](https://paean.ai)
 
 ### Acknowledgments
 
-- [Silero VAD](https://github.com/snakers4/silero-vad) by the Silero Team (MIT License)
-- CoreML model conversion based on techniques from [FluidInference/mobius](https://github.com/FluidInference/mobius)
+- [Silero VAD](https://github.com/snakers4/silero-vad) by the Silero Team — original VAD model (MIT License)
+- [FluidInference/silero-vad-coreml](https://huggingface.co/FluidInference/silero-vad-coreml) by Fluid Inference — CoreML model conversion (MIT License)
