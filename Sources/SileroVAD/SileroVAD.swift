@@ -47,32 +47,29 @@ public final class SileroVAD {
 
     // MARK: - Initialization
 
-    /// Create a new SileroVAD instance, loading the CoreML model from the package bundle.
+    /// Create a new SileroVAD instance with an explicit model URL.
     ///
-    /// - Throws: `SileroVADError.modelNotFound` if the model file is missing,
-    ///   or a CoreML error if loading fails.
-    public init() throws {
-        let bundle = Bundle.module
-
-        guard let resourceURL = bundle.resourceURL,
-              let modelURL = bundle.url(forResource: "Resources/silero_vad", withExtension: "mlmodelc")
-                ?? bundle.url(forResource: "silero_vad", withExtension: "mlmodelc")
-                ?? {
-                    let url = resourceURL.appendingPathComponent("Resources/silero_vad.mlmodelc")
-                    return FileManager.default.fileExists(atPath: url.path) ? url : nil
-                }()
-        else {
-            throw SileroVADError.modelNotFound
-        }
-
+    /// - Parameter modelURL: File URL to the compiled `silero_vad.mlmodelc` bundle.
+    /// - Throws: A CoreML error if loading fails.
+    public init(modelURL: URL) throws {
         let config = MLModelConfiguration()
-        config.computeUnits = .all  // Prefer Apple Neural Engine when available
-
+        config.computeUnits = .all
         model = try MLModel(contentsOf: modelURL, configuration: config)
-
-        // Initialize LSTM states to zeros
         hiddenState = try MLMultiArray(shape: Self.stateShape, dataType: .float32)
         cellState = try MLMultiArray(shape: Self.stateShape, dataType: .float32)
+    }
+
+    /// Create a new SileroVAD instance, searching for the model in a given bundle.
+    ///
+    /// - Parameter bundle: The bundle containing `silero_vad.mlmodelc`.
+    ///   Defaults to `.main`.
+    /// - Throws: `SileroVADError.modelNotFound` if the model file is missing,
+    ///   or a CoreML error if loading fails.
+    public convenience init(bundle: Bundle = .main) throws {
+        guard let url = bundle.url(forResource: "silero_vad", withExtension: "mlmodelc") else {
+            throw SileroVADError.modelNotFound
+        }
+        try self.init(modelURL: url)
     }
 
     // MARK: - Public API

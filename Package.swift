@@ -15,8 +15,7 @@ let package = Package(
     ],
     targets: [
         .target(
-            name: "SileroVAD",
-            resources: [.copy("Resources")]
+            name: "SileroVAD"
         ),
         .testTarget(
             name: "SileroVADTests",
